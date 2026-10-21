@@ -63,8 +63,7 @@ def illustrate_first(daily, generate) -> dict[str, str]:
             raw = generate(story.title, story.summary)
             if not raw:
                 continue
-            wide = 720 if story.title == daily.lead_title else 160
-            found[story.page_url] = shrink_image(raw, wide=wide)
+            found[story.page_url] = shrink_image(raw, wide=720)
         except Exception:
             continue
     return found
