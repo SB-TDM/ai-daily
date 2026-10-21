@@ -41,6 +41,35 @@ def shrink_image(raw: bytes, *, wide: int) -> str:
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
+def illustration_prompt(title: str, summary: str) -> str:
+    return (
+        "Editorial illustration for a printed newspaper, flat ink and muted newsprint colors, "
+        "no letters, no numbers, no logos, no real person's face. Subject: "
+        + title
+        + ". "
+        + summary
+    )
+
+
+def illustrate_first(daily, generate) -> dict[str, str]:
+    found = {}
+    for section in daily.sections:
+        if not section.stories:
+            continue
+        story = section.stories[0]
+        if not story.page_url or story.page_url in found:
+            continue
+        try:
+            raw = generate(story.title, story.summary)
+            if not raw:
+                continue
+            wide = 720 if story.title == daily.lead_title else 160
+            found[story.page_url] = shrink_image(raw, wide=wide)
+        except Exception:
+            continue
+    return found
+
+
 def load_story_images(daily, get_text, get_bytes, origin: str = "https://aihot.news") -> dict[str, str]:
     found = {}
     for section in daily.sections:

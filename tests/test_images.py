@@ -2,7 +2,7 @@ import struct
 import zlib
 from datetime import date
 from ai_daily.aihot import Daily, Section, Story
-from ai_daily.images import first_image_url, load_story_images, shrink_image
+from ai_daily.images import first_image_url, illustrate_first, load_story_images, shrink_image
 
 
 def _png(width: int, height: int) -> bytes:
@@ -39,30 +39,41 @@ def test_shrink_image_returns_a_jpeg_no_wider_than_asked():
     assert Image.open(BytesIO(raw)).size[0] <= 160
 
 
-def test_command_fetch_sends_a_browser_user_agent(monkeypatch):
-    import httpx
-    from ai_daily.__main__ import _load_images
-
-    seen = []
-
-    class Resp:
-        text = '<img src="/api/img-proxy?u=https%3A%2F%2Fexample.com%2Fa.png">'
-        content = _png(8, 8)
-
-    def fake_get(url, timeout=None, follow_redirects=None, headers=None):
-        seen.append(headers or {})
-        return Resp()
-
-    monkeypatch.setattr(httpx, "get", fake_get)
+def test_illustrate_first_asks_only_for_the_first_story_of_each_section():
     daily = Daily(
         date(2026, 10, 21),
         "Lead",
         "Deck",
-        (Section("产品", (Story("Other", "b", "S", "https://aihot.news/items/other"),)),),
+        (
+            Section("模型", (Story("Mercury", "很快。", "S", "https://aihot.news/items/mercury"), Story("Skip", "不画。", "S", "https://aihot.news/items/skip"))),
+            Section("产品", (Story("Lead", "开源。", "S", "https://aihot.news/items/lead"),)),
+        ),
     )
-    found = _load_images(daily)
-    assert "Mozilla" in seen[0].get("User-Agent", "")
-    assert found["https://aihot.news/items/other"].startswith("data:image/jpeg;base64,")
+    asked = []
+
+    def generate(title: str, summary: str) -> bytes:
+        asked.append((title, summary))
+        if title == "Mercury":
+            raise RuntimeError("down")
+        return _png(20, 10)
+
+    found = illustrate_first(daily, generate)
+    assert asked == [("Mercury", "很快。"), ("Lead", "开源。")]
+    assert "https://aihot.news/items/mercury" not in found
+    assert "https://aihot.news/items/skip" not in found
+    assert found["https://aihot.news/items/lead"].startswith("data:image/jpeg;base64,")
+
+
+def test_missing_image_key_does_not_call_the_model(monkeypatch):
+    import httpx
+    from ai_daily.__main__ import _load_images
+
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    calls = []
+    monkeypatch.setattr(httpx, "post", lambda *args, **kwargs: calls.append(args))
+    daily = Daily(date(2026, 10, 21), "Lead", "Deck", (Section("产品", (Story("Lead", "开源。", "S", "https://aihot.news/items/lead"),)),))
+    assert _load_images(daily) == {}
+    assert calls == []
 
 
 def test_load_story_images_skips_a_failed_page_and_keeps_the_rest():

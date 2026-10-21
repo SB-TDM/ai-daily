@@ -31,18 +31,32 @@ def _post(url: str, body):
     return httpx.post(url, json=body).json()
 
 def _load_images(daily):
+    import base64
     import httpx
-    from ai_daily.images import load_story_images
+    from ai_daily.images import illustrate_first, illustration_prompt
 
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"}
+    key = os.environ.get("OPENAI_API_KEY")
+    if not key:
+        return {}
+    base = os.environ.get("OPENAI_BASE_URL", "https://www.string.ink/v1").rstrip("/")
 
-    def get_text(url: str) -> str:
-        return httpx.get(url, timeout=8, follow_redirects=True, headers=headers).text
+    def generate(title: str, summary: str) -> bytes:
+        response = httpx.post(
+            f"{base}/images/generations",
+            headers={"Authorization": f"Bearer {key}"},
+            json={
+                "model": "gpt-image-2",
+                "prompt": illustration_prompt(title, summary),
+                "n": 1,
+                "size": "1024x1024",
+                "response_format": "b64_json",
+            },
+            timeout=90,
+        )
+        response.raise_for_status()
+        return base64.b64decode(response.json()["data"][0]["b64_json"])
 
-    def get_bytes(url: str) -> bytes:
-        return httpx.get(url, timeout=8, follow_redirects=True, headers=headers).content
-
-    return load_story_images(daily, get_text, get_bytes)
+    return illustrate_first(daily, generate)
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1:], os.environ, datetime.now(timezone.utc), _get, screenshot_html, _post, _load_images))
