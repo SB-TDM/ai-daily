@@ -1,5 +1,7 @@
 # AI Daily Poster Implementation Plan
 
+> **Obsolete.** Do not execute this plan. The approved design no longer uses two Upstreams, molds, or a model. See `docs/superpowers/specs/2026-10-21-ai-daily-poster-design.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build one command that reads today's two Upstreams, fills three visual molds, draws one light-anime poster, and sends that single image to a WeCom group.
