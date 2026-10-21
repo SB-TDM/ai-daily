@@ -41,20 +41,29 @@ def _load_images(daily):
     base = os.environ.get("OPENAI_BASE_URL", "https://www.string.ink/v1").rstrip("/")
 
     def generate(title: str, summary: str) -> bytes:
-        response = httpx.post(
-            f"{base}/images/generations",
-            headers={"Authorization": f"Bearer {key}"},
-            json={
-                "model": "gpt-image-2",
-                "prompt": illustration_prompt(title, summary),
-                "n": 1,
-                "size": "1024x1024",
-                "response_format": "b64_json",
-            },
-            timeout=90,
-        )
-        response.raise_for_status()
-        return base64.b64decode(response.json()["data"][0]["b64_json"])
+        last = None
+        for attempt in range(3):
+            try:
+                response = httpx.post(
+                    f"{base}/images/generations",
+                    headers={"Authorization": f"Bearer {key}"},
+                    json={
+                        "model": "gpt-image-2.5-flare",
+                        "prompt": illustration_prompt(title, summary),
+                        "n": 1,
+                        "size": "1024x1024",
+                        "response_format": "b64_json",
+                    },
+                    timeout=120,
+                )
+                response.raise_for_status()
+                return base64.b64decode(response.json()["data"][0]["b64_json"])
+            except Exception as exc:
+                last = exc
+                if attempt < 2:
+                    import time
+                    time.sleep(2)
+        raise last
 
     return illustrate_first(daily, generate)
 

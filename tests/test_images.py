@@ -64,6 +64,34 @@ def test_illustrate_first_asks_only_for_the_first_story_of_each_section():
     assert found["https://aihot.news/items/lead"].startswith("data:image/jpeg;base64,")
 
 
+def test_image_call_retries_once_with_flare(monkeypatch):
+    import base64
+    import httpx
+    from ai_daily.__main__ import _load_images
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    calls = []
+
+    class Resp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"data": [{"b64_json": base64.b64encode(_png(8, 8)).decode()}]}
+
+    def post(*args, **kwargs):
+        calls.append(kwargs["json"]["model"])
+        if len(calls) == 1:
+            raise RuntimeError("down")
+        return Resp()
+
+    monkeypatch.setattr(httpx, "post", post)
+    daily = Daily(date(2026, 10, 21), "Lead", "Deck", (Section("产品", (Story("Lead", "开源。", "S", "https://aihot.news/items/lead"),)),))
+    found = _load_images(daily)
+    assert calls == ["gpt-image-2.5-flare", "gpt-image-2.5-flare"]
+    assert found["https://aihot.news/items/lead"].startswith("data:image/jpeg;base64,")
+
+
 def test_missing_image_key_does_not_call_the_model(monkeypatch):
     import httpx
     from ai_daily.__main__ import _load_images
