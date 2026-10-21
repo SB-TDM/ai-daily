@@ -48,7 +48,7 @@ def _load_images(daily):
                     f"{base}/images/generations",
                     headers={"Authorization": f"Bearer {key}"},
                     json={
-                        "model": "gpt-image-2.5-flare",
+                        "model": "grok-imagine-image",
                         "prompt": illustration_prompt(title, summary),
                         "n": 1,
                         "size": "1024x1024",

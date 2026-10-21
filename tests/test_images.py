@@ -64,7 +64,7 @@ def test_illustrate_first_asks_only_for_the_first_story_of_each_section():
     assert found["https://aihot.news/items/lead"].startswith("data:image/jpeg;base64,")
 
 
-def test_image_call_retries_once_with_flare(monkeypatch):
+def test_image_call_retries_once_with_grok(monkeypatch):
     import base64
     import httpx
     from ai_daily.__main__ import _load_images
@@ -88,7 +88,32 @@ def test_image_call_retries_once_with_flare(monkeypatch):
     monkeypatch.setattr(httpx, "post", post)
     daily = Daily(date(2026, 10, 21), "Lead", "Deck", (Section("产品", (Story("Lead", "开源。", "S", "https://aihot.news/items/lead"),)),))
     found = _load_images(daily)
-    assert calls == ["gpt-image-2.5-flare", "gpt-image-2.5-flare"]
+    assert calls == ["grok-imagine-image", "grok-imagine-image"]
+    assert found["https://aihot.news/items/lead"].startswith("data:image/jpeg;base64,")
+
+
+def test_image_request_uses_grok_imagine_image(monkeypatch):
+    import httpx
+    from ai_daily.__main__ import _load_images
+
+    seen = []
+
+    class Resp:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"data": [{"b64_json": __import__("base64").b64encode(_png(8, 8)).decode("ascii")}]}
+
+    def fake_post(url, headers=None, json=None, timeout=None):
+        seen.append(json or {})
+        return Resp()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(httpx, "post", fake_post)
+    daily = Daily(date(2026, 10, 21), "Lead", "Deck", (Section("产品", (Story("Lead", "开源。", "S", "https://aihot.news/items/lead"),)),))
+    found = _load_images(daily)
+    assert seen[0]["model"] == "grok-imagine-image"
     assert found["https://aihot.news/items/lead"].startswith("data:image/jpeg;base64,")
 
 
