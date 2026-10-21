@@ -40,6 +40,8 @@ def test_lead_photo_is_not_repeated_and_other_stories_keep_a_thumb():
     assert html.count("data:image/jpeg;base64,LEAD") == 1
     assert html.count("data:image/jpeg;base64,THUMB") == 1
     assert "https://aihot.news/items/" not in html
-    assert "width:96px" not in html
-    assert "float:left" not in html
-    assert html.count("height:200px") == 2
+    assert html.count("DeepSeek 开源") == 1
+    assert "grid-template-columns:1fr 1fr" in html
+    assert "object-fit" not in html
+    assert "height:200px" not in html
+    assert html.count("height:auto") == 2
