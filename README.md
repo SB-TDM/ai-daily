@@ -7,7 +7,8 @@
 ## 它做什么
 
 - 只读 `https://aihot.news/api/v1/dailies/YYYY-MM-DD`。
-- 用当天的头条和栏目排版。栏目名是粉色贴纸。
+- 排成一栏报纸：米色纸、黑字、报头下粗细双线。头条下有通栏图。有图的条目左边有小图。没有图就只印文字。
+- 图只从 aihot 条目页取，不打开原文站。
 - 不画快讯，不放角色，不印网址，不写期号，不写「内部传阅」。
 - 截图超过 2MB，或截图、发送失败，都不把今天记成已发。
 - 同一天已经发过，就停止。
@@ -20,7 +21,7 @@
 - Playwright 的 Chromium
 
 ```powershell
-python -m pip install httpx playwright tzdata
+python -m pip install httpx playwright tzdata pillow
 python -m playwright install chromium
 ```
 

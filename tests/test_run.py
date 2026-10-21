@@ -49,3 +49,10 @@ def test_success_posts_one_image_and_marks_sent(tmp_path: Path):
     assert "快讯不该进图" not in seen[0]
     assert posts[0]["msgtype"] == "image"
     assert already_sent(path, DAY) is True
+
+
+def test_image_loader_failure_still_sends(tmp_path: Path):
+    path = tmp_path / "sent.json"
+    result = run_once(DAY, path, PAYLOAD, None, lambda html: b"\x89PNG-ok", lambda json: {"errcode": 0}, load_images=lambda daily: (_ for _ in ()).throw(RuntimeError("net")))
+    assert result == "sent"
+    assert already_sent(path, DAY) is True

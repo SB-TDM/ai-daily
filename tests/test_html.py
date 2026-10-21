@@ -16,10 +16,29 @@ def test_page_has_masthead_lead_section_and_footer_without_url_or_issue():
     assert "同步开源。" in html
     assert "模型发布/更新" in html
     assert "Mercury 3" in html
-    assert "头条" in html
+    assert "速度达 1068 tokens/秒。" in html
+    assert "Inception Labs：Blog" in html
     assert "内部传阅" not in html
-    assert "font-size:18px" in html
+    assert "头条" not in html
+    assert "border-radius:999px" not in html
     assert "http" not in html
     assert "第" not in html
     assert "快讯" not in html
     assert "角色" not in html
+    assert "<img" not in html
+
+
+def test_lead_photo_is_not_repeated_and_other_stories_keep_a_thumb():
+    lead = Story("DeepSeek 开源", "同步开源。", "DeepSeek", "https://aihot.news/items/lead")
+    other = Story("Mercury 3", "很快。", "Inception", "https://aihot.news/items/mercury")
+    daily = Daily(date(2026, 10, 21), "DeepSeek 开源", "同步开源。", (Section("产品发布/更新", (lead, other)),))
+    images = {
+        lead.page_url: "data:image/jpeg;base64,LEAD",
+        other.page_url: "data:image/jpeg;base64,THUMB",
+    }
+    html = render_html(daily, images)
+    assert html.count("data:image/jpeg;base64,LEAD") == 1
+    assert html.count("data:image/jpeg;base64,THUMB") == 1
+    assert "https://aihot.news/items/" not in html
+    assert "width:100%" in html.split("data:image/jpeg;base64,LEAD")[1][:80]
+    assert "width:96px" in html

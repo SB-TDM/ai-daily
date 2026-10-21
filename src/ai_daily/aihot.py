@@ -18,6 +18,7 @@ class Story:
     title: str
     summary: str
     source_name: str
+    page_url: str = ""
 
 
 @dataclass(frozen=True)
@@ -51,7 +52,12 @@ def parse_daily(payload: dict, day: date) -> Daily:
         if label == "快讯":
             continue
         stories = tuple(
-            Story(item.get("title") or "", item.get("summary") or "", clean_source((item.get("source") or {}).get("name") or ""))
+            Story(
+                item.get("title") or "",
+                item.get("summary") or "",
+                clean_source((item.get("source") or {}).get("name") or ""),
+                ((item.get("links") or {}).get("aihot") or ""),
+            )
             for item in raw.get("items") or []
         )
         if stories:
