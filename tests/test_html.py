@@ -45,3 +45,6 @@ def test_lead_photo_is_not_repeated_and_other_stories_keep_a_thumb():
     assert "object-fit" not in html
     assert "height:200px" not in html
     assert html.count("height:auto") == 2
+    assert "width:calc(50%" not in html
+    assert html.count("float:right") == 2
+    assert html.count("grid-column:1 / -1") >= 3
