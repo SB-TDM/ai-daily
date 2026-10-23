@@ -1,0 +1,11 @@
+services:
+  ai-daily:
+    build: .
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      AI_DAILY_FONT_DIR: /fonts
+    volumes:
+      - ./runtime:/app/runtime
+      - ./fonts:/fonts:ro
+    restart: unless-stopped

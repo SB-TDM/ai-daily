@@ -1,0 +1,7 @@
+.env
+data
+runtime
+fonts
+.git
+.pytest_cache
+__pycache__
